@@ -28,10 +28,9 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     this.metaDataTable = metaDataTable;
   }
 
-
   @Override
-  public void addStream(String accountId, String streamName) throws Exception {
-    String json = GSON.toJson(createStreamSpec(streamName));
+  public void addStream(String accountId, String streamName, long streamTtl) throws Exception {
+    String json = GSON.toJson(createStreamSpec(streamName, streamTtl));
     OperationContext context = new OperationContext(accountId);
     MetaDataEntry existing = metaDataTable.get(context, accountId, null, ENTRY_TYPE, streamName);
     if (existing == null) {
@@ -56,7 +55,10 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     return existing != null;
   }
 
-  private StreamSpecification createStreamSpec(String streamName) {
-    return new StreamSpecification.Builder().setName(streamName).create();
+  private StreamSpecification createStreamSpec(String streamName, long ttl) {
+    return new StreamSpecification.Builder()
+      .setName(streamName)
+      .setTtl(ttl)
+      .create();
   }
 }

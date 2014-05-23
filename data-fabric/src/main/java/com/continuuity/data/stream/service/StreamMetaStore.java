@@ -13,7 +13,7 @@ public interface StreamMetaStore {
   /**
    * Adds a stream to the meta store.
    */
-  void addStream(String accountId, String streamName) throws Exception;
+  void addStream(String accountId, String streamName, long streamTtl) throws Exception;
 
   /**
    * Removes a stream from the meta store.

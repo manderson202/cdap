@@ -170,7 +170,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
     try {
       StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
-      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(), streamLocation);
+      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(),
+                              streamLocation, config.getTtl());
     } finally {
       Closeables.closeQuietly(reader);
     }
@@ -206,13 +207,15 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     }
 
     Properties properties = (props == null) ? new Properties() : props;
+    long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
+                                                     cConf.get(Constants.Stream.TTL)));
     long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION,
                                             cConf.get(Constants.Stream.PARTITION_DURATION)));
     long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
                                                                cConf.get(Constants.Stream.INDEX_INTERVAL)));
 
     Location tmpConfigLocation = configLocation.getTempFile(null);
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, streamLocation);
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, streamLocation, ttl);
     Writer writer = new OutputStreamWriter(tmpConfigLocation.getOutputStream(), Charsets.UTF_8);
     try {
       GSON.toJson(config, writer);

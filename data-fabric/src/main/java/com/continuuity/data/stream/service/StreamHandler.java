@@ -49,11 +49,13 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * The {@link HttpHandler} for handling REST call to stream endpoints.
@@ -114,7 +116,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
-                     @PathParam("stream") String stream) throws Exception {
+                     @PathParam("stream") String stream,
+                     // TODO(alvin): make this default more sensible
+                     @DefaultValue("30000") @QueryParam("ttl") long ttl) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
 
@@ -127,7 +131,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
-    streamMetaStore.addStream(accountID, stream);
+    streamMetaStore.addStream(accountID, stream, ttl);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);

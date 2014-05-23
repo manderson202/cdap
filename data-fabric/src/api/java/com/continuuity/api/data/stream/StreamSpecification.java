@@ -1,13 +1,19 @@
 package com.continuuity.api.data.stream;
 
+import com.google.common.base.Preconditions;
+import org.joda.time.DurationFieldType;
+import org.joda.time.Hours;
+
 /**
  * Specification for {@link Stream}.
  */
 public final class StreamSpecification {
   private final String name;
+  private final long ttl;
 
-  private StreamSpecification(final String name) {
+  private StreamSpecification(final String name, final long ttl) {
     this.name = name;
+    this.ttl = ttl;
   }
 
   /**
@@ -17,11 +23,19 @@ public final class StreamSpecification {
     return name;
   }
 
- /**
+  /**
+   * Returns the time to live for all events in the Stream.
+   */
+  public long getTtl() {
+    return ttl;
+  }
+
+  /**
   * {@code StreamSpecification} builder used to build specification of stream.
   */
   public static final class Builder {
     private String name;
+    private long ttl;
 
     /**
      * Adds name parameter to Streams.
@@ -34,11 +48,21 @@ public final class StreamSpecification {
     }
 
     /**
+     * Adds ttl parameter to Streams.
+     * @param ttl stream ttl
+     * @return Builder instance
+     */
+    public Builder setTtl(long ttl) {
+      this.ttl = ttl;
+      return this;
+    }
+
+    /**
      * Create {@code StreamSpecification}.
      * @return Instance of {@code StreamSpecification}
      */
     public StreamSpecification create() {
-      StreamSpecification specification = new StreamSpecification(name);
+      StreamSpecification specification = new StreamSpecification(name, ttl);
       return specification;
     }
   }

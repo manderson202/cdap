@@ -10,10 +10,16 @@ package com.continuuity.api.data.stream;
  */
 public final class Stream {
   private final String name;
-
+  private final long ttl;
 
   public Stream(final String name) {
+    // TODO(alvin): fix default value
+    this(name, 15000);
+  }
+
+  public Stream(final String name, final long ttl) {
     this.name = name;
+    this.ttl = ttl;
   }
 
  /**
@@ -23,6 +29,9 @@ public final class Stream {
   *
   */
   public StreamSpecification configure() {
-    return new StreamSpecification.Builder().setName(this.name).create();
+    return new StreamSpecification.Builder()
+      .setName(this.name)
+      .setTtl(this.ttl)
+      .create();
   }
 }

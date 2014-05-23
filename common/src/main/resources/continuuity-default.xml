@@ -249,6 +249,13 @@
     </property>
 
     <property>
+        <name>stream.ttl</name>
+        <!-- TODO(alvin): fix this default -->
+        <value>15000</value>
+        <description>Default time to live for stream events in milliseconds</description>
+    </property>
+
+    <property>
         <name>stream.consumer.table.presplits</name>
         <value>16</value>
         <description>Number of splits for the stream consumer table</description>

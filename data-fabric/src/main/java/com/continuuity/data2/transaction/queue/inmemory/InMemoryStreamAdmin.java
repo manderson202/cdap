@@ -23,6 +23,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public StreamConfig getConfig(String streamName) {
-    return new StreamConfig(streamName, Long.MAX_VALUE, Long.MAX_VALUE, null);
+    // TODO(alvin): change hardcoded value
+    return new StreamConfig(streamName, Long.MAX_VALUE, Long.MAX_VALUE, null, 15000);
   }
 }

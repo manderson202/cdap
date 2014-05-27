@@ -117,8 +117,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("stream") String stream,
-                     // TODO(alvin): make this default more sensible
-                     @DefaultValue("30000") @QueryParam("ttl") long ttl) throws Exception {
+                     // default is Long.MAX_VALUE
+                     @DefaultValue("9223372036854775807") @QueryParam("ttl") long ttl) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
 

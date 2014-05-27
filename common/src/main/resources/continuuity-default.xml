@@ -250,8 +250,8 @@
 
     <property>
         <name>stream.ttl</name>
-        <!-- TODO(alvin): fix this default -->
-        <value>15000</value>
+        <!-- default is Long.MAX_VALUE -->
+        <value>9223372036854775807</value>
         <description>Default time to live for stream events in milliseconds</description>
     </property>
 

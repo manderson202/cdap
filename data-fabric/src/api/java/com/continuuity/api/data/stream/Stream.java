@@ -13,8 +13,8 @@ public final class Stream {
   private final long ttl;
 
   public Stream(final String name) {
-    // TODO(alvin): fix default value
-    this(name, 15000);
+    // TODO: remove this hardcoded default
+    this(name, Long.MAX_VALUE);
   }
 
   public Stream(final String name, final long ttl) {

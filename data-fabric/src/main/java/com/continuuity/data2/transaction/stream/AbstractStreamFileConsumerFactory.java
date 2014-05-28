@@ -79,7 +79,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   @Override
   public final StreamConsumer create(QueueName streamName, String namespace,
                                      ConsumerConfig consumerConfig) throws IOException {
-    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamName.getSimpleName());
+    // TODO: implement accountId
+    String accountId = null;
+    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, accountId, streamName.getSimpleName());
 
     String tableName = getTableName(streamName, namespace);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);

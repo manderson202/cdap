@@ -232,15 +232,15 @@ public final class StreamUtils {
     return new StreamFileOffset(eventLocation, offset);
   }
 
-  public static StreamConfig ensureExists(StreamAdmin admin, String streamName) throws IOException {
+  public static StreamConfig ensureExists(StreamAdmin admin, String accountId, String streamName) throws IOException {
     try {
-      return admin.getConfig(streamName);
+      return admin.getConfig(accountId, streamName);
     } catch (Exception e) {
       // Ignored
     }
     try {
       admin.create(streamName);
-      return admin.getConfig(streamName);
+      return admin.getConfig(accountId, streamName);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);

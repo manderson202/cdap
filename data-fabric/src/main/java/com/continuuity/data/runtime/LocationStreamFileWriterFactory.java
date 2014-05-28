@@ -37,7 +37,9 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
   @Override
   public FileWriter<StreamEvent> create(String streamName) throws IOException {
     try {
-      StreamConfig config = streamAdmin.getConfig(streamName);
+      // TODO: implement accountId
+      String accountId = null;
+      StreamConfig config = streamAdmin.getConfig(accountId, streamName);
       Preconditions.checkNotNull(config.getLocation(), "Location for stream {} is unknown.", streamName);
       return new TimePartitionedStreamFileWriter(config, filePrefix);
 

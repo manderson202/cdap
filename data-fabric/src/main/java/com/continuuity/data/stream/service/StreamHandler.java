@@ -28,6 +28,7 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DefaultValue;
@@ -71,27 +73,21 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final StreamAdmin streamAdmin;
   private final ConcurrentStreamWriter streamWriter;
 
-  // TODO: Need to make the decision of whether this should be inside StreamAdmin or not.
-  // Currently is here to align with the existing Reactor organization that dataset admin is not aware of MDS
-  private final StreamMetaStore streamMetaStore;
-
   // A timed cache from consumer id (group id) to stream consumer.
   private final LoadingCache<ConsumerCacheKey, StreamDequeuer> dequeuerCache;
 
   @Inject
-  public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+  public StreamHandler(CConfiguration cConf, Authenticator authenticator, StreamAdmin streamAdmin,
                        StreamConsumerFactory streamConsumerFactory, StreamFileWriterFactory writerFactory,
                        TransactionExecutorFactory executorFactory, MetricsCollectionService metricsCollectionService) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
-    this.streamMetaStore = streamMetaStore;
     this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory);
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
                                                                        Constants.Gateway.METRICS_CONTEXT, "0");
-    this.streamWriter = new ConcurrentStreamWriter(streamAdmin, streamMetaStore, writerFactory,
+    this.streamWriter = new ConcurrentStreamWriter(streamAdmin, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
   }
 
@@ -106,7 +102,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                    @PathParam("stream") String stream) throws Exception {
     String accountID = getAuthenticatedAccountId(request);
 
-    if (streamMetaStore.streamExists(accountID, stream)) {
+    // TODO: use accountID
+    if (streamAdmin.exists(stream)) {
       responder.sendStatus(HttpResponseStatus.OK);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -116,11 +113,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
-                     @PathParam("stream") String stream,
-                     // default is Long.MAX_VALUE
-                     @DefaultValue("9223372036854775807") @QueryParam("ttl") long ttl) throws Exception {
+                     @PathParam("stream") String stream) throws Exception {
 
-    String accountID = getAuthenticatedAccountId(request);
+    Optional<String> ttlOption = Optional.fromNullable(request.getHeader(Constants.Stream.Headers.TTL));
+    String ttlString = ttlOption.or("9223372036854775807");
+    long ttl = Long.parseLong(ttlString);
+
+    // TODO: implement accountId
+    String accountId = getAuthenticatedAccountId(request);
 
     // Verify stream name
     if (!isValidName(stream)) {
@@ -129,9 +129,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    // TODO: Modify the REST API to support custom configurations.
-    streamAdmin.create(stream);
-    streamMetaStore.addStream(accountID, stream, ttl);
+    Properties streamProperties = new Properties();
+    streamProperties.put(Constants.Stream.TTL, Long.toString(ttl));
+    streamAdmin.create(stream, streamProperties);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
@@ -204,7 +204,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                           @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
-    if (!streamMetaStore.streamExists(accountId, stream)) {
+    // TODO: use accountId
+    if (!streamAdmin.exists(stream)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
       return;
     }
@@ -219,8 +220,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                                    cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1));
 
     String consumerId = Long.toString(groupId);
-    responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(Constants.Stream.Headers.CONSUMER_ID, consumerId));
+    responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8), ImmutableMultimap.of(Constants.Stream.Headers.CONSUMER_ID, consumerId));
   }
 
   @POST
@@ -257,7 +257,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }).build(new CacheLoader<ConsumerCacheKey, StreamDequeuer>() {
         @Override
         public StreamDequeuer load(ConsumerCacheKey key) throws Exception {
-          if (!streamMetaStore.streamExists(key.getAccountId(), key.getStreamName())) {
+          if (!streamAdmin.exists(key.getStreamName())) {
             throw new IllegalStateException("Stream not exists");
           }
 

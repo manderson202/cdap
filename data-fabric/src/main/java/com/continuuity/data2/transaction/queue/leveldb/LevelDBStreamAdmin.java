@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * admin for streams in leveldb.
@@ -49,7 +50,12 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
+  public Collection<StreamConfig> getAll(String accountId) {
+    return null;
+  }
+
+  @Override
+  public StreamConfig getConfig(String accountId, String streamName) throws IOException {
     return null;
   }
 }

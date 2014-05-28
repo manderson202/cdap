@@ -4,6 +4,8 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.dataset.api.DataSetManager;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -38,10 +40,17 @@ public interface StreamAdmin extends DataSetManager {
   void upgrade() throws Exception;
 
   /**
+   * @param accountId User account id.
+   * @return Configurations of all streams.
+   */
+  Collection<StreamConfig> getAll(String accountId);
+
+  /**
    * Returns the configuration of the given stream.
+   * @param accountId User account id.
    * @param streamName Name of the stream.
    * @return A {@link StreamConfig} instance.
    * @throws IOException If the stream doesn't exists.
    */
-  StreamConfig getConfig(String streamName) throws IOException;
+  StreamConfig getConfig(String accountId, String streamName) throws IOException;
 }

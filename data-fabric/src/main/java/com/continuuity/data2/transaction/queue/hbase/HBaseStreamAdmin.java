@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -62,7 +63,12 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
+  public StreamConfig getConfig(String accountId, String streamName) throws IOException {
     return null;
+  }
+
+  @Override
+  public Collection<StreamConfig> getAll(String accountId) {
+    // TODO
   }
 }

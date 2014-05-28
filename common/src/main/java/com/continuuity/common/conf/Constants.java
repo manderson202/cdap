@@ -359,6 +359,7 @@ public final class Constants {
      */
     public static final class Headers {
       public static final String CONSUMER_ID = "X-Continuuity-ConsumerId";
+      public static final String TTL = "X-Continuuity-Ttl";
     }
 
     // Time for a stream consumer to timeout in StreamHandler for REST API dequeue.

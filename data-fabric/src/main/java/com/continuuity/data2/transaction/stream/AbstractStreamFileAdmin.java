@@ -70,7 +70,9 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     LOG.info("Configure instances: {} {}", groupId, instances);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
+    // TODO: implement accountId
+    String accountId = null;
+    StreamConfig config = StreamUtils.ensureExists(this, accountId, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -107,7 +109,9 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     LOG.info("Configure groups for {}: {}", name, groupInfo);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
+    // TODO: implement accountId
+    String accountId = null;
+    StreamConfig config = StreamUtils.ensureExists(this, accountId, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -162,7 +166,9 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
+  public StreamConfig getConfig(String accountId, String streamName) throws IOException {
+    // TODO: implement accountId
+
     Location streamLocation = streamBaseLocation.append(streamName);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
 
@@ -175,6 +181,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     } finally {
       Closeables.closeQuietly(reader);
     }
+  }
+
+  @Override
+  public Collection<StreamConfig> getAll(String accountId) {
+    // TODO
   }
 
   @Override

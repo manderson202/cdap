@@ -33,6 +33,8 @@ public class StreamTailer {
       return;
     }
     String streamName = args[0];
+    // TODO: implement accountId
+    String accountId = null;
 
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = new Configuration();
@@ -42,7 +44,7 @@ public class StreamTailer {
                                              new LocationRuntimeModule().getDistributedModules());
 
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
-    Location streamLocation = streamAdmin.getConfig(streamName).getLocation();
+    Location streamLocation = streamAdmin.getConfig(accountId, streamName).getLocation();
     List<Location> eventFiles = Lists.newArrayList();
 
     for (Location partition : streamLocation.list()) {
@@ -57,7 +59,8 @@ public class StreamTailer {
       }
     }
 
-    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamAdmin.getConfig(streamName),
+    // TODO: implement accountId
+    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamAdmin.getConfig(accountId, streamName),
       ImmutableList.copyOf(Iterables.transform(eventFiles, createOffsetConverter())));
     List<StreamEvent> events = Lists.newArrayList();
     while (reader.read(events, 10, 100, TimeUnit.MILLISECONDS) >= 0) {

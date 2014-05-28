@@ -46,6 +46,7 @@ import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.Util;
@@ -75,6 +76,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -121,6 +123,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -2903,7 +2906,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         }
         return GSON.toJson(makeDataSetRecord(name, typeName, spec));
       } else if (type == Data.STREAM) {
-        StreamSpecification spec = store.getStream(account, name);
+        StreamSpecification spec = StreamSpecification.from(streamAdmin.getConfig(account.getId(), name));
         return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
       }
       return "";
@@ -2923,10 +2926,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
-        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
-        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
-        for (StreamSpecification spec : specs) {
-          result.add(makeStreamRecord(spec.getName(), null));
+        Collection<StreamConfig> configs = streamAdmin.getAll(programId.getAccountId());
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(configs.size());
+        for (StreamConfig config : configs) {
+          result.add(makeStreamRecord(config.getName(), null));
         }
         return GSON.toJson(result);
       }

@@ -61,18 +61,15 @@ public final class ConcurrentStreamWriter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriter.class);
 
   private final StreamAdmin streamAdmin;
-  private final StreamMetaStore streamMetaStore;
   private final StreamFileWriterFactory writerFactory;
   private final int workerThreads;
   private final MetricsCollector metricsCollector;
   private final ConcurrentMap<String, EventQueue> eventQueues;
   private final Lock createLock;
 
-  public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                                StreamFileWriterFactory writerFactory,
+  public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamFileWriterFactory writerFactory,
                                 int workerThreads, MetricsCollector metricsCollector) {
     this.streamAdmin = streamAdmin;
-    this.streamMetaStore = streamMetaStore;
     this.writerFactory = writerFactory;
     this.workerThreads = workerThreads;
     this.metricsCollector = metricsCollector;
@@ -123,10 +120,11 @@ public final class ConcurrentStreamWriter implements Closeable {
 
     createLock.lock();
     try {
-      if (!streamMetaStore.streamExists(accountId, streamName)) {
+      // TODO: implement accountId
+      if (!streamAdmin.exists(streamName)) {
         throw new IllegalArgumentException("Stream not exists");
       }
-      StreamUtils.ensureExists(streamAdmin, streamName);
+      StreamUtils.ensureExists(streamAdmin, accountId, streamName);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw new IOException(e);

@@ -1,5 +1,6 @@
 package com.continuuity.api.data.stream;
 
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Preconditions;
 import org.joda.time.DurationFieldType;
 import org.joda.time.Hours;
@@ -28,6 +29,13 @@ public final class StreamSpecification {
    */
   public long getTtl() {
     return ttl;
+  }
+
+  /**
+   * @return A {@link StreamSpecification} from a {@link StreamConfig}.
+   */
+  public static StreamSpecification from(StreamConfig config) {
+    return new StreamSpecification(config.getName(), config.getTtl());
   }
 
   /**

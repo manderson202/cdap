@@ -243,10 +243,10 @@
     </property>
 
     <property>
-        <name>stream.partition.ttl</name>
+        <name>stream.event.ttl</name>
         <!-- 0 indicates indefinite TTL !-->
         <value>0</value>
-        <description>Default time to live in milliseconds for stream partitions</description>
+        <description>Default time to live in milliseconds for stream events</description>
     </property>
 
     <property>

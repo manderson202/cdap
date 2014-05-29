@@ -429,7 +429,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         long startPos = eventInput.getPos();
 
         try {
-          if (filter.acceptOffset(startPos)) {
+          if (filter.acceptOffset(startPos, timestamp)) {
             event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
           } else {
             skipStreamData();

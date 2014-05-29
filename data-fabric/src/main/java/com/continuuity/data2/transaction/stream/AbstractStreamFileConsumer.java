@@ -8,6 +8,8 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
+import com.continuuity.data.file.ReadFilters;
+import com.continuuity.data.file.filter.TTLReadFilter;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
@@ -164,7 +166,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
     this.reader = reader;
-    this.readFilter = createReadFilter(consumerConfig);
+    this.readFilter = ReadFilters.and(createTtlReadFilter(streamConfig),
+                                      createReadFilter(consumerConfig));
 
     this.entryStates = Maps.newTreeMap(ROW_PREFIX_COMPARATOR);
     this.entryStatesScanCompleted = Sets.newTreeSet(ROW_PREFIX_COMPARATOR);
@@ -365,6 +368,10 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .add("consumer", consumerConfig)
       .toString();
   }
+  
+  public ReadFilter createTtlReadFilter(final StreamConfig streamConfig) {
+    return new TTLReadFilter(streamConfig.getTtl());
+  }
 
   private ReadFilter createReadFilter(final ConsumerConfig consumerConfig) {
     final int groupSize = consumerConfig.getGroupSize();
@@ -383,7 +390,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     return new ReadFilter() {
       @Override
-      public boolean acceptOffset(long offset) {
+      public boolean acceptOffset(long offset, long eventTimestamp) {
         int hashValue = Math.abs(strategy == DequeueStrategy.HASH ? 0 : ROUND_ROBIN_HASHER.hashLong(offset).hashCode());
         return instanceId == (hashValue % groupSize);
       }
@@ -535,7 +542,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     // If the entry offset is not accepted by the read filter, this consumer won't see this entry in future read.
     // If it is written after the current transaction, it happens with the current consumer config.
     // In both cases, no need to cache
-    if (!readFilter.acceptOffset(offset) || stateWritePointer >= transaction.getWritePointer()) {
+    if (!readFilter.acceptOffset(offset, -1) || stateWritePointer >= transaction.getWritePointer()) {
       return false;
     }
 

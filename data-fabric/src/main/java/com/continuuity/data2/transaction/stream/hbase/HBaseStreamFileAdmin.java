@@ -21,5 +21,4 @@ public final class HBaseStreamFileAdmin extends AbstractStreamFileAdmin {
                        StreamConsumerStateStoreFactory stateStoreFactory, HBaseStreamAdmin oldStreamAdmin) {
     super(locationFactory, cConf, stateStoreFactory, oldStreamAdmin);
   }
-
 }

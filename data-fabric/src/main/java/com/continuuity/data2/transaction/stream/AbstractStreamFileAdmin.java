@@ -204,12 +204,12 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void create(String name, @Nullable Properties props) throws Exception {
-    Location streamLocation = streamBaseLocation.append(name);
+    Location streamLocation = streamNameToLocation(streamBaseLocation, name);
     if (!streamLocation.mkdirs() && !streamLocation.isDirectory()) {
       throw new IllegalStateException("Failed to create stream '" + name + "' at " + streamLocation.toURI());
     }
 
-    Location configLocation = streamBaseLocation.append(name).append(CONFIG_FILE_NAME);
+    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
     if (!configLocation.createNew()) {
       // Stream already exists
       return;
@@ -261,12 +261,22 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     }
   }
 
+  private Location streamNameToLocation(Location streamBaseLocation, String streamName) throws IOException {
+    return streamBaseLocation.append(streamName);
+  }
+
+  private String streamLocationToName(Location streamLocation) {
+    String[] tokens = streamLocation.toURI().getRawPath().split("/");
+    return tokens[tokens.length - 1];
+  }
+
   private StreamConfig getStreamConfig(Location streamLocation) throws IOException {
+    String streamName = streamLocationToName(streamLocation);
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
     Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
     try {
       StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
-      return new StreamConfig(config.getName(), config.getPartitionDuration(), config.getIndexInterval(),
+      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(),
                               streamLocation, config.getTtl());
     } finally {
       Closeables.closeQuietly(reader);

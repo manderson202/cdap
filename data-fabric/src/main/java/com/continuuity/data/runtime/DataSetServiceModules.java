@@ -1,6 +1,10 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.dataset2.executor.DatasetOpExecutor;
+import com.continuuity.data2.dataset2.executor.InMemoryDatasetOpExecutor;
+import com.continuuity.data2.dataset2.executor.LocalDatasetOpExecutor;
+import com.continuuity.data2.dataset2.executor.YarnDatasetOpExecutor;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
@@ -38,8 +42,10 @@ public class DataSetServiceModules {
         //       as long as the data is durably persisted
         bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
         bind(DatasetManagerService.class);
-
         expose(DatasetManagerService.class);
+
+        bind(DatasetOpExecutor.class).to(InMemoryDatasetOpExecutor.class);
+        expose(DatasetOpExecutor.class);
       }
     };
 
@@ -60,8 +66,10 @@ public class DataSetServiceModules {
         //       as long as the data is durably persisted
         bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
         bind(DatasetManagerService.class);
-
         expose(DatasetManagerService.class);
+
+        bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
+        expose(DatasetOpExecutor.class);
       }
     };
 
@@ -82,8 +90,10 @@ public class DataSetServiceModules {
         //       as long as the data is durably persisted
         bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
         bind(DatasetManagerService.class);
-
         expose(DatasetManagerService.class);
+
+        bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
+        expose(DatasetOpExecutor.class);
       }
     };
   }

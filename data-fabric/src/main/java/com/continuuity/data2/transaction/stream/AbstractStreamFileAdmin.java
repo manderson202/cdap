@@ -12,6 +12,7 @@ import com.continuuity.data.stream.StreamUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -27,6 +28,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -172,20 +174,16 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Location streamLocation = streamBaseLocation.append(streamName);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
 
-    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
-    Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
-    try {
-      StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
-      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(),
-                              streamLocation, config.getTtl());
-    } finally {
-      Closeables.closeQuietly(reader);
-    }
+    return getStreamConfig(streamLocation);
   }
 
   @Override
-  public Collection<StreamConfig> getAll(String accountId) {
-    // TODO
+  public Collection<StreamConfig> getAll(String accountId) throws IOException {
+    List<StreamConfig> all = Lists.newArrayList();
+    for (Location streamLocation : streamBaseLocation.list()) {
+      all.add(getStreamConfig(streamLocation));
+    }
+    return all;
   }
 
   @Override
@@ -260,6 +258,18 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     String streamName = QueueName.fromStream(name).toURI().toString();
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.upgrade(streamName, properties);
+    }
+  }
+
+  private StreamConfig getStreamConfig(Location streamLocation) throws IOException {
+    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
+    Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
+    try {
+      StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
+      return new StreamConfig(config.getName(), config.getPartitionDuration(), config.getIndexInterval(),
+                              streamLocation, config.getTtl());
+    } finally {
+      Closeables.closeQuietly(reader);
     }
   }
 

@@ -53,7 +53,7 @@ public abstract class StreamConsumerTestBase {
     QueueName streamName = QueueName.fromStream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(stream);
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    StreamConfig streamConfig = streamAdmin.getConfig(null, stream);
 
     // Writes 5 events
     writeEvents(streamConfig, "Testing ", 5);
@@ -120,7 +120,7 @@ public abstract class StreamConsumerTestBase {
     QueueName streamName = QueueName.fromStream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(stream);
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    StreamConfig streamConfig = streamAdmin.getConfig(null, stream);
 
     // Writes 5 events
     writeEvents(streamConfig, "Testing ", 5);
@@ -214,7 +214,7 @@ public abstract class StreamConsumerTestBase {
     QueueName streamName = QueueName.fromStream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(stream);
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    StreamConfig streamConfig = streamAdmin.getConfig(null, stream);
 
     // Writer 10 messages to new stream
     writeEvents(streamConfig, "New event ", 10);

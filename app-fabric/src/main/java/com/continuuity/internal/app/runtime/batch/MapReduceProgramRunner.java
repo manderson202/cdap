@@ -512,7 +512,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     } else if (batchReadable instanceof StreamBatchReadable) {
       // TODO: It's a hack for stream
       StreamBatchReadable stream = (StreamBatchReadable) batchReadable;
-      Location streamPath = streamAdmin.getConfig(stream.getStreamName()).getLocation();
+      Location streamPath = streamAdmin.getConfig(null, stream.getStreamName()).getLocation();
       LOG.info("Using stream as input from {}", streamPath.toURI());
 
       TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());

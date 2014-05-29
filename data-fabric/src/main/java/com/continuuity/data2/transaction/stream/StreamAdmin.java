@@ -43,7 +43,7 @@ public interface StreamAdmin extends DataSetManager {
    * @param accountId User account id.
    * @return Configurations of all streams.
    */
-  Collection<StreamConfig> getAll(String accountId);
+  Collection<StreamConfig> getAll(String accountId) throws IOException;
 
   /**
    * Returns the configuration of the given stream.

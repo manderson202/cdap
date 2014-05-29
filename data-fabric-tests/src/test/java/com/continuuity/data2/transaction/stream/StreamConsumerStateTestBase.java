@@ -32,7 +32,7 @@ public abstract class StreamConsumerStateTestBase {
     String streamName = "testStateExists";
     streamAdmin.create(streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(null, streamName);
     StreamConsumerStateStore stateStore = createStateStore(config);
 
     streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 1);
@@ -52,7 +52,7 @@ public abstract class StreamConsumerStateTestBase {
     String streamName = "testStore";
     streamAdmin.create(streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(null, streamName);
 
     // Creates a state with 4 offsets
     StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
@@ -72,7 +72,7 @@ public abstract class StreamConsumerStateTestBase {
     String streamName = "testMultiStore";
     streamAdmin.create(streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(null, streamName);
 
     // Creates 4 states of 2 groups, each with 4 offsets
     Set<StreamConsumerState> states = Sets.newHashSet();
@@ -96,7 +96,7 @@ public abstract class StreamConsumerStateTestBase {
     String streamName = "testRemove";
     streamAdmin.create(streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(null, streamName);
 
     // Creates 4 states of 2 groups, each with 4 offsets
     Set<StreamConsumerState> states = Sets.newHashSet();
@@ -140,7 +140,7 @@ public abstract class StreamConsumerStateTestBase {
     String streamName = "testChangeInstance";
     streamAdmin.create(streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(null, streamName);
 
     // Creates a state with 4 offsets
     StreamConsumerState state = generateState(0L, 0, config, 0L, 4);

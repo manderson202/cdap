@@ -69,6 +69,6 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Override
   public Collection<StreamConfig> getAll(String accountId) {
-    // TODO
+    return null;
   }
 }

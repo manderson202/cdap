@@ -24,9 +24,4 @@ public final class LevelDBStreamFileAdmin extends AbstractStreamFileAdmin {
                          StreamConsumerStateStoreFactory stateStoreFactory, LevelDBStreamAdmin oldStreamAdmin) {
     super(locationFactory, cConf, stateStoreFactory, oldStreamAdmin);
   }
-
-  @Override
-  public Collection<StreamConfig> getAll(String accountId) {
-    // TODO
-  }
 }

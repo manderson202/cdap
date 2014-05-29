@@ -464,7 +464,7 @@ public abstract class StreamDataFileTestBase {
     Properties properties = new Properties();
     properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(partitionDuration));
     streamAdmin.create(streamName, properties);
-    final StreamConfig config = streamAdmin.getConfig(streamName);
+    final StreamConfig config = streamAdmin.getConfig(null, streamName);
 
     // Create a thread that will write 10 event per second
     final AtomicInteger eventsWritten = new AtomicInteger();

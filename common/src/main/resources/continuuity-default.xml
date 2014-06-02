@@ -244,8 +244,8 @@
 
     <property>
         <name>stream.event.ttl</name>
-        <!-- 0 indicates indefinite TTL !-->
-        <value>0</value>
+        <!-- Long.MAX_VALUE !-->
+        <value>9223372036854775807</value>
         <description>Default time to live in milliseconds for stream events</description>
     </property>
 

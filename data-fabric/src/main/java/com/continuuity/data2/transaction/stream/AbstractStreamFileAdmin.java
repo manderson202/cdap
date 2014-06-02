@@ -171,7 +171,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     try {
       StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
       return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(),
-                              config.getTtl(), streamLocation);
+                              config.getTTL(), streamLocation);
     } finally {
       Closeables.closeQuietly(reader);
     }
@@ -182,13 +182,21 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Location streamLocation = streamBaseLocation.append(streamName);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
 
+    StreamConfig originalConfig = getConfig(streamName);
+    Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
+                                "Configuration update for stream '{}' was not valid (can only update ttl)", streamName);
+
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
-    Writer writer = new OutputStreamWriter(configLocation.getOutputStream(), Charsets.UTF_8);
+    Location tempLocation = configLocation.getTempFile("tmp");
+    Writer writer = new OutputStreamWriter(tempLocation.getOutputStream(), Charsets.UTF_8);
     try {
       writer.write(GSON.toJson(config));
     } finally {
       Closeables.closeQuietly(writer);
     }
+
+    Preconditions.checkState(tempLocation.renameTo(configLocation) != null, "Rename {} to {} failed",
+                             tempLocation, configLocation);
   }
 
   @Override
@@ -264,6 +272,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.upgrade(streamName, properties);
     }
+  }
+
+  private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {
+    return originalConfig.getIndexInterval() == newConfig.getIndexInterval()
+      && originalConfig.getPartitionDuration() == newConfig.getPartitionDuration();
   }
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,

@@ -370,7 +370,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   }
   
   public ReadFilter createTtlReadFilter(final StreamConfig streamConfig) {
-    return new TTLReadFilter(streamConfig.getTtl());
+    return new TTLReadFilter(streamConfig.getTTL());
   }
 
   private ReadFilter createReadFilter(final ConsumerConfig consumerConfig) {

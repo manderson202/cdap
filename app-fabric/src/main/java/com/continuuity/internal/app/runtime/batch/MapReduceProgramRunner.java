@@ -27,7 +27,7 @@ import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.stream.TextStreamInputFormat;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -91,7 +91,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DataSetAccessor dataSetAccessor;
-  private final DatasetManager datasetManager;
+  private final DatasetFramework datasetFramework;
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
@@ -104,7 +104,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 LocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
                                 DataSetAccessor dataSetAccessor,
-                                DatasetManager datasetManager,
+                                DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionExecutorFactory txExecutorFactory) {
@@ -114,7 +114,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.streamAdmin = streamAdmin;
     this.metricsCollectionService = metricsCollectionService;
     this.dataSetAccessor = dataSetAccessor;
-    this.datasetManager = datasetManager;
+    this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
   }
@@ -153,7 +153,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetManager,
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                       program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
     Map<String, DatasetInstanceCreationSpec> datasetSpecs = program.getSpecification().getDatasets();

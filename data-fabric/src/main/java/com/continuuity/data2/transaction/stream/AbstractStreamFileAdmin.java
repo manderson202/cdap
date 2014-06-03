@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
@@ -188,15 +189,17 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
     Location tempLocation = configLocation.getTempFile("tmp");
-    Writer writer = new OutputStreamWriter(tempLocation.getOutputStream(), Charsets.UTF_8);
     try {
-      writer.write(GSON.toJson(config));
-    } finally {
-      Closeables.closeQuietly(writer);
-    }
+      CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+        Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
 
-    Preconditions.checkState(tempLocation.renameTo(configLocation) != null, "Rename {} to {} failed",
-                             tempLocation, configLocation);
+      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
+                               "Rename {} to {} failed", tempLocation, configLocation);
+    } finally {
+      if (tempLocation.exists()) {
+        tempLocation.delete();
+      }
+    }
   }
 
   @Override
@@ -238,13 +241,16 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     Location tmpConfigLocation = configLocation.getTempFile(null);
     StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
-    Writer writer = new OutputStreamWriter(tmpConfigLocation.getOutputStream(), Charsets.UTF_8);
+    CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+      Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
+    
     try {
-      GSON.toJson(config, writer);
+      tmpConfigLocation.renameTo(configLocation);
     } finally {
-      writer.close();
+      if (tmpConfigLocation.exists()) {
+        tmpConfigLocation.delete();
+      }
     }
-    tmpConfigLocation.renameTo(configLocation);
   }
 
   @Override

@@ -340,7 +340,7 @@ public abstract class StreamConsumerTestBase {
     TransactionContext txContext = createTxContext(consumer);
     txContext.start();
 
-    Assert.assertEquals(ttl, streamAdmin.getConfig(stream).getTtl());
+    Assert.assertEquals(ttl, streamAdmin.getConfig(stream).getTTL());
 
     List<String> actualEvents = Lists.newArrayList();
     List<String> expectedEvents = Lists.newArrayList();

@@ -73,13 +73,9 @@ public class StreamInputFormatTest {
 
     // Verify the result. It should have 2500 "Not expired event {timestamp}" for timestamp 1500..1999 by 1
     Map<String, Integer> output = loadMRResult(outputDir);
-    for (Map.Entry<String, Integer> entry : output.entrySet()) {
-      System.out.println(entry.getKey() + ": " + entry.getValue());
-    }
-
-    Assert.assertEquals(2501, output.size());
+    Assert.assertEquals(1501, output.size());
     Assert.assertEquals(null, output.get("expiredEvent"));
-    Assert.assertEquals(2500, output.get("nonExpiredEvent").intValue());
+    Assert.assertEquals(1500, output.get("nonExpiredEvent").intValue());
     for (long i = (currentTime - ttl); i < currentTime; i++) {
       Assert.assertEquals(1, output.get(Long.toString(i)).intValue());
     }

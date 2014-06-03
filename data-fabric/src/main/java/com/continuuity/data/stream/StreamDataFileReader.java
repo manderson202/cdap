@@ -347,7 +347,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         if (condition.apply(position, timestamp)) {
           break;
         }
-        nextStreamEvent(ReadFilter.ALWAYS_REJECT);
+        nextStreamEvent(ReadFilter.ALWAYS_REJECT_OFFSET);
         position = eventInput.getPos();
       }
     } catch (IOException e) {

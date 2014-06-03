@@ -16,16 +16,11 @@ public abstract class ReadFilter {
   public static final ReadFilter ALWAYS_ACCEPT = new ReadFilter() { };
 
   /**
-   * Always reject what it sees.
+   * Always reject offset.
    */
-  public static final ReadFilter ALWAYS_REJECT = new ReadFilter() {
+  public static final ReadFilter ALWAYS_REJECT_OFFSET = new ReadFilter() {
     @Override
     public boolean acceptOffset(long offset) {
-      return false;
-    }
-
-    @Override
-    public boolean acceptTimestamp(long timestamp) {
       return false;
     }
   };

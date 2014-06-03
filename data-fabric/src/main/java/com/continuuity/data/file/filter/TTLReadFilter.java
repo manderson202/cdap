@@ -11,7 +11,7 @@ import com.continuuity.data.file.ReadFilter;
 public class TTLReadFilter extends ReadFilter {
 
   /**
-   * Time to live. A value of 0 indicates indefinite TTL.
+   * Time to live.
    */
   private long ttl;
 
@@ -20,12 +20,8 @@ public class TTLReadFilter extends ReadFilter {
   }
 
   @Override
-  public boolean acceptOffset(long offset, long eventTimestamp) {
-    if (ttl == 0) {
-      return true;
-    }
-
-    return getCurrentTime() - eventTimestamp <= ttl;
+  public boolean acceptTimestamp(long timestamp) {
+    return getCurrentTime() - timestamp <= ttl;
   }
 
   protected long getCurrentTime() {

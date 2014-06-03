@@ -295,8 +295,8 @@ public abstract class StreamConsumerTestBase {
   }
 
   @Test
-  public void testTtl() throws Exception {
-    String stream = "testTtl";
+  public void testTTL() throws Exception {
+    String stream = "testTTL";
     QueueName streamName = QueueName.fromStream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 

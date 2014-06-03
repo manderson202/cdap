@@ -16,9 +16,19 @@ public final class AndReadFilter extends ReadFilter {
   }
 
   @Override
-  public boolean acceptOffset(long offset, long eventTimestamp) {
+  public boolean acceptOffset(long offset) {
     for (ReadFilter filter : filters) {
-      if (!filter.acceptOffset(offset, eventTimestamp)) {
+      if (!filter.acceptOffset(offset)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean acceptTimestamp(long timestamp) {
+    for (ReadFilter filter : filters) {
+      if (!filter.acceptTimestamp(timestamp)) {
         return false;
       }
     }

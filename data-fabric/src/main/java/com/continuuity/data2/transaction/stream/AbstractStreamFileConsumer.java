@@ -390,7 +390,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     return new ReadFilter() {
       @Override
-      public boolean acceptOffset(long offset, long eventTimestamp) {
+      public boolean acceptOffset(long offset) {
         int hashValue = Math.abs(strategy == DequeueStrategy.HASH ? 0 : ROUND_ROBIN_HASHER.hashLong(offset).hashCode());
         return instanceId == (hashValue % groupSize);
       }
@@ -542,7 +542,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     // If the entry offset is not accepted by the read filter, this consumer won't see this entry in future read.
     // If it is written after the current transaction, it happens with the current consumer config.
     // In both cases, no need to cache
-    if (!readFilter.acceptOffset(offset, -1) || stateWritePointer >= transaction.getWritePointer()) {
+    if (!readFilter.acceptOffset(offset) || stateWritePointer >= transaction.getWritePointer()) {
       return false;
     }
 

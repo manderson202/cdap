@@ -20,7 +20,12 @@ public abstract class ReadFilter {
    */
   public static final ReadFilter ALWAYS_REJECT = new ReadFilter() {
     @Override
-    public boolean acceptOffset(long offset, long eventTimestamp) {
+    public boolean acceptOffset(long offset) {
+      return false;
+    }
+
+    @Override
+    public boolean acceptTimestamp(long timestamp) {
       return false;
     }
   };
@@ -28,12 +33,20 @@ public abstract class ReadFilter {
   /**
    * Accept or reject based on file offset.
    *
-   *
    * @param offset The file offset.
-   * @param eventTimestamp The timestamp of the event.
    * @return {@code true} to accept, {@code false} to reject.
    */
-  public boolean acceptOffset(long offset, long eventTimestamp) {
+  public boolean acceptOffset(long offset) {
+    return true;
+  }
+
+  /**
+   * Accept or reject based on event timestamp.
+   *
+   * @param timestamp The timestamp of the event.
+   * @return {@code true} to accept, {@code false} to reject.
+   */
+  public boolean acceptTimestamp(long timestamp) {
     return true;
   }
 }

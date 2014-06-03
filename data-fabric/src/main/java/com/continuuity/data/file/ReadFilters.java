@@ -8,7 +8,9 @@ import com.continuuity.data.file.filter.AndReadFilter;
 /**
  * Utility functions for {@link com.continuuity.data.file.ReadFilter}.
  */
-public class ReadFilters {
+public final class ReadFilters {
+  private ReadFilters() {}
+
   public static final ReadFilter and(ReadFilter lhs, ReadFilter rhs) {
     return new AndReadFilter(lhs, rhs);
   }

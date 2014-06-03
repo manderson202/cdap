@@ -330,12 +330,21 @@ public abstract class StreamConsumerTestBase {
     field.setAccessible(true);
     ReadFilter[] readFilters = (ReadFilter[]) field.get(readFilter);
 
-    readFilters[0] = new TTLReadFilter(ttl) {
-      @Override
-      protected long getCurrentTime() {
-        return 10001;
+    boolean replacedTTLReadFilter = false;
+    for (int i = 0; i < readFilters.length; i++) {
+      ReadFilter rf = readFilters[i];
+      if (rf instanceof TTLReadFilter) {
+        readFilters[i] = new TTLReadFilter(ttl) {
+          @Override
+          protected long getCurrentTime() {
+            return 10001;
+          }
+        };
+        replacedTTLReadFilter = true;
       }
-    };
+    }
+
+    Assert.assertTrue(replacedTTLReadFilter);
 
     TransactionContext txContext = createTxContext(consumer);
     txContext.start();

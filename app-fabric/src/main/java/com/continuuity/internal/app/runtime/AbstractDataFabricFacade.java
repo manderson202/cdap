@@ -20,9 +20,11 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
+import com.continuuity.data2.transaction.queue.hbase.ShardedQueueProducerFactory;
 import com.continuuity.data2.transaction.stream.ForwardingStreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -31,7 +33,7 @@ import java.io.IOException;
 /**
  * Abstract base class for implementing DataFabricFacade.
  */
-public abstract class AbstractDataFabricFacade implements DataFabricFacade {
+public abstract class AbstractDataFabricFacade implements DataFabricFacade, ShardedQueueProducerFactory {
 
   private final DataSetInstantiator dataSetContext;
   private final QueueClientFactory queueClientFactory;
@@ -88,6 +90,22 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   @Override
   public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     QueueProducer producer = queueClientFactory.createProducer(queueName, queueMetrics);
+    if (producer instanceof TransactionAware) {
+      dataSetContext.addTransactionAware((TransactionAware) producer);
+    }
+    return producer;
+  }
+
+  @Override
+  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics,
+                                      Iterable<ConsumerConfig> consumerConfigs) throws IOException {
+    // The underlying queue client factory has to be sharded one.
+    Preconditions.checkState(queueClientFactory instanceof ShardedQueueProducerFactory,
+                             "Sharded queue not supported");
+
+    QueueProducer producer = ((ShardedQueueProducerFactory) queueClientFactory).createProducer(queueName,
+                                                                                               queueMetrics,
+                                                                                               consumerConfigs);
     if (producer instanceof TransactionAware) {
       dataSetContext.addTransactionAware((TransactionAware) producer);
     }

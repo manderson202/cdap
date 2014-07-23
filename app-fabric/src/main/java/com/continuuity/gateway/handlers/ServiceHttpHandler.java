@@ -20,6 +20,7 @@ import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -94,6 +95,64 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
           service.addProperty("id", entry.getValue().getName());
           service.addProperty("name", entry.getValue().getName());
           service.addProperty("description", entry.getValue().getDescription());
+          services.add(service);
+        }
+        responder.sendJson(HttpResponseStatus.OK, services);
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Return information for all user twill apps for an application.
+   */
+  @GET
+  @Path("/apps/{app-id}/services-info")
+  public void infoServices(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") String appId) {
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
+      if (spec != null) {
+        JsonArray services = new JsonArray();
+        for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
+          JsonObject service = new JsonObject();
+          String serviceId = entry.getValue().getName();
+          service.addProperty("id", serviceId);
+          // service id is the same as service name
+          service.addProperty("name", serviceId);
+          service.addProperty("description", entry.getValue().getDescription());
+          // add status of service
+          final Id.Program id = Id.Program.from(accountId, appId, serviceId);
+          ProgramRuntimeService.RuntimeInfo runtimeInfo =
+            findRuntimeInfo(accountId, appId, serviceId, Type.SERVICE);
+          // program is stopped
+          if (runtimeInfo == null) {
+            service.addProperty("status", ProgramController.State.STOPPED.toString());
+          } else {
+            service.addProperty("status", controllerStateToString(runtimeInfo.getController().getState()));
+          }
+          // Runnables
+          JsonArray runnables = new JsonArray();
+          ServiceSpecification serviceSpec = getServiceSpecification(accountId, appId, serviceId);
+          if (serviceSpec != null) {
+            for (Map.Entry<String, RuntimeSpecification> runnableEntry : serviceSpec.getRunnables().entrySet()) {
+              JsonObject runnable = new JsonObject();
+              String runnableName = runnableEntry.getKey();
+              runnable.addProperty("id", runnableName);
+              runnable.addProperty("requested", runnableEntry.getValue().getResourceSpecification().getInstances());
+              runnable.addProperty("provisioned", getRunnableCount(accountId, appId, serviceId, runnableName));
+              runnables.add(runnable);
+            }
+          }
+          service.add("runnables", runnables);
           services.add(service);
         }
         responder.sendJson(HttpResponseStatus.OK, services);
@@ -292,5 +351,18 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     return null;
+  }
+
+  /**
+   * Convert controller state to appropriate string
+   */
+  private String controllerStateToString(ProgramController.State state) {
+    if (state == ProgramController.State.ALIVE) {
+      return "RUNNING";
+    }
+    if (state == ProgramController.State.ERROR) {
+      return "FAILED";
+    }
+    return state.toString();
   }
 }

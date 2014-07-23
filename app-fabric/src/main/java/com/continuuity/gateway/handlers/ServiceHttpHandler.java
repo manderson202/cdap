@@ -124,6 +124,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         JsonArray services = new JsonArray();
         for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
           JsonObject service = new JsonObject();
+          service.addProperty("type", Type.SERVICE.prettyName());
+          service.addProperty("app", appId);
           String serviceId = entry.getValue().getName();
           service.addProperty("id", serviceId);
           // service id is the same as service name

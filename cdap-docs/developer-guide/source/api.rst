@@ -491,6 +491,7 @@ You can create a Dataset by issuing an HTTP PUT request to the URL::
 with JSON-formatted name of the dataset type and properties in a body::
 
   {
+     "datasetName":"<dataset-name>",
      "typeName":"<type-name>",
      "properties":{<properties>}
   }
@@ -533,7 +534,11 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
+     - ``{``
+       ``    "typeName":"co.cask.cdap.api.dataset.table.Table",``
+       ``    "datasetName":"mydataset",``
+       ``    "properties":{"ttl":"3600000"}``
+       ``}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 

@@ -16,14 +16,17 @@
 
 package co.cask.cdap.client.app;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
+import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -32,7 +35,7 @@ import java.util.List;
  *
  */
 public class FakeDataset extends AbstractDataset
-  implements BatchReadable<byte[], byte[]>, RecordScannable<KeyValue<byte[], byte[]>> {
+  implements BatchReadable<byte[], Integer>, RecordScannable<KeyValue<byte[], Integer>> {
 
   public static final String TYPE_NAME = "fakeType";
 
@@ -43,17 +46,17 @@ public class FakeDataset extends AbstractDataset
     this.table = table;
   }
 
-  public byte[] get(byte[] key) {
-    return table.read(key);
+  public int get(byte[] key) {
+    return Bytes.toInt(table.read(key));
   }
 
-  public void put(byte[] key, byte[] value) {
-    table.write(key, value);
+  public void put(byte[] key, int value) {
+    table.write(key, Bytes.toBytes(value));
   }
 
   @Override
   public Type getRecordType() {
-    return table.getRecordType();
+    return new TypeToken<KeyValue<byte[], Integer>>() { }.getType();
   }
 
   @Override
@@ -62,12 +65,53 @@ public class FakeDataset extends AbstractDataset
   }
 
   @Override
-  public RecordScanner<KeyValue<byte[], byte[]>> createSplitRecordScanner(Split split) {
-    return table.createSplitRecordScanner(split);
+  public RecordScanner<KeyValue<byte[], Integer>> createSplitRecordScanner(Split split) {
+    return Scannables.splitRecordScanner(createSplitReader(split), new RecordMaker());
   }
 
   @Override
-  public SplitReader<byte[], byte[]> createSplitReader(Split split) {
-    return table.createSplitReader(split);
+  public SplitReader<byte[], Integer> createSplitReader(Split split) {
+    return new Scanner(table.createSplitReader(split));
+  }
+
+  private static final class Scanner extends SplitReader<byte[], Integer> {
+
+    private SplitReader<byte[], byte[]> reader;
+
+    public Scanner(SplitReader<byte[], byte[]> reader) {
+      this.reader = reader;
+    }
+
+    @Override
+    public void initialize(Split split) throws InterruptedException {
+      this.reader.initialize(split);
+    }
+
+    @Override
+    public boolean nextKeyValue() throws InterruptedException {
+      return this.reader.nextKeyValue();
+    }
+
+    @Override
+    public byte[] getCurrentKey() throws InterruptedException {
+      return this.reader.getCurrentKey();
+    }
+
+    @Override
+    public void close() {
+      this.reader.close();
+    }
+
+    @Override
+    public Integer getCurrentValue() throws InterruptedException {
+      return Bytes.toInt(this.reader.getCurrentValue());
+    }
+  }
+
+  private static final class RecordMaker implements Scannables.RecordMaker<byte[], Integer, KeyValue<byte[], Integer>> {
+    @Override
+    public KeyValue<byte[], Integer> makeRecord(byte[] bytes, Integer integer) {
+      return new KeyValue<byte[], Integer>(bytes, integer);
+    }
   }
 }

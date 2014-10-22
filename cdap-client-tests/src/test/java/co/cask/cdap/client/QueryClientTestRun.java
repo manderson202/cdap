@@ -82,15 +82,15 @@ public class QueryClientTestRun extends ClientTestBase {
     List<QueryResult> results = queryClient.getResults(queryHandle, 20);
     Assert.assertNotNull(results);
     Assert.assertEquals(2, results.size());
-    Assert.assertEquals("bob", Bytes.toString(GSON.fromJson(
-      results.get(0).getColumns().get(0).toString(), byte[].class)));
-    Assert.assertEquals("123", Bytes.toString(GSON.fromJson(
-      results.get(0).getColumns().get(1).toString(), byte[].class)));
-    Assert.assertEquals("joe", Bytes.toString(GSON.fromJson(
-      results.get(1).getColumns().get(0).toString(), byte[].class)));
-    Assert.assertEquals("321", Bytes.toString(GSON.fromJson(
-      results.get(1).getColumns().get(1).toString(), byte[].class)));
+    Assert.assertEquals("bob", bytesJsonToString(results.get(0).getColumns().get(0).toString()));
+    Assert.assertEquals("123", results.get(0).getColumns().get(1).toString());
+    Assert.assertEquals("joe", bytesJsonToString(results.get(1).getColumns().get(0).toString()));
+    Assert.assertEquals("321", results.get(1).getColumns().get(1).toString());
 
     queryClient.delete(queryHandle);
+  }
+  
+  private String bytesJsonToString(String bytesJson) {
+    return Bytes.toString(GSON.fromJson(bytesJson, byte[].class));
   }
 }

@@ -57,7 +57,7 @@ public class FakeFlow implements Flow {
       int separatorIndex = eventBody.indexOf(":");
       if (separatorIndex != -1) {
         fakeDataset.put(Bytes.toBytes(eventBody.substring(0, separatorIndex)),
-                        Bytes.toBytes(eventBody.substring(separatorIndex + 1)));
+                        Integer.parseInt(eventBody.substring(separatorIndex + 1)));
       }
     }
 

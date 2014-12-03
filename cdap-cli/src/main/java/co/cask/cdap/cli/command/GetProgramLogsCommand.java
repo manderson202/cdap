@@ -41,21 +41,11 @@ public class GetProgramLogsCommand implements Command {
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
+    String programId = programIdParts[1];
     long start = arguments.getLong(ArgumentName.START_TIME.toString(), 0);
     long stop = arguments.getLong(ArgumentName.START_TIME.toString(), Long.MAX_VALUE);
 
-    String logs;
-    if (elementType == ElementType.RUNNABLE) {
-      String serviceId = programIdParts[1];
-      String runnableId = programIdParts[2];
-      logs = programClient.getServiceRunnableLogs(appId, serviceId, runnableId, start, stop);
-    } else if (elementType.getProgramType() != null) {
-      String programId = programIdParts[1];
-      logs = programClient.getProgramLogs(appId, elementType.getProgramType(), programId, start, stop);
-    } else {
-      throw new IllegalArgumentException("Cannot get logs for " + elementType.getPluralName());
-    }
-
+    String logs = programClient.getProgramLogs(appId, elementType.getProgramType(), programId, start, stop);
     output.println(logs);
   }
 

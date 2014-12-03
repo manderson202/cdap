@@ -52,11 +52,6 @@ public class GetProgramInstancesCommand implements Command {
         String procedureId = programIdParts[1];
         instances = programClient.getProcedureInstances(appId, procedureId);
         break;
-      case RUNNABLE:
-        String serviceId = programIdParts[1];
-        String runnableId = programIdParts[2];
-        instances = programClient.getServiceRunnableInstances(appId, serviceId, runnableId);
-        break;
       default:
         // TODO: remove this
         throw new IllegalArgumentException("Unrecognized program element type for scaling: " + elementType);

@@ -290,55 +290,6 @@ public class ProgramClient {
   }
 
   /**
-   * Gets the number of instances that a service runnable is running on.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @return number of instances that the service runnable is running on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   */
-  public int getServiceRunnableInstances(String appId, String serviceId, String runnableId)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
-
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/instances",
-                                              appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
-    }
-
-    return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
-  }
-
-  /**
-   * Sets the number of instances that a service runnable is running on.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @param instances number of instances for the service runnable to run on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   */
-  public void setServiceRunnableInstances(String appId, String serviceId, String runnableId, int instances)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
-
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/instances",
-                                              appId, serviceId, runnableId));
-    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
-
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
-    }
-  }
-
-  /**
    * Gets the run records of a program.
    *
    * @param appId ID of the application that the program belongs to
@@ -424,33 +375,6 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programId);
-    }
-
-    return new String(response.getResponseBody(), Charsets.UTF_8);
-  }
-
-  /**
-   * Gets the logs of a service runnable.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @param start start time of the time range of desired logs
-   * @param stop end time of the time range of desired logs
-   * @return the logs of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   */
-  public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
-
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
-                                              appId, serviceId, runnableId, start, stop));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
 
     return new String(response.getResponseBody(), Charsets.UTF_8);

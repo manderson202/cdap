@@ -57,13 +57,6 @@ public class SetProgramInstancesCommand implements Command {
         output.printf("Successfully set procedure '%s' of app '%s' to %d instances\n",
                       procedureId, appId, numInstances);
         break;
-      case RUNNABLE:
-        String serviceId = programIdParts[1];
-        String runnableId = programIdParts[2];
-        programClient.setServiceRunnableInstances(appId, serviceId, runnableId, numInstances);
-        output.printf("Successfully set runnable '%s' of service '%s' of app '%s' to %d instances\n",
-                      runnableId, serviceId, appId, numInstances);
-        break;
       default:
         // TODO: remove this
         throw new IllegalArgumentException("Unrecognized program element type for scaling: " + elementType);

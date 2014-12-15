@@ -21,11 +21,14 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 
@@ -52,7 +55,8 @@ public class SparkPageRankApp extends AbstractApplication {
     addStream(new Stream("backlinkURLStream"));
 
     // Run a Spark program on the acquired data
-    addSpark(new SparkPageRankSpecification());
+    // addSpark(new SparkPageRankSpecification());
+    addWorkflow(new SparkPageRankWorkflow());
 
     // Retrieve the processed data using a Service
     addService(RANKS_SERVICE_NAME, new RanksServiceHandler());
@@ -69,6 +73,23 @@ public class SparkPageRankApp extends AbstractApplication {
       // no auto-magic way deserialize an object.) In this case that will not happen
       // because String and Double are actual classes.
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * SparkPageRank program as a part of Workflow.
+   */
+  public class SparkPageRankWorkflow implements Workflow {
+
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with()
+        .setName("SparkPageRankWorkflow")
+        .setDescription("SparkPageRank in Workflow")
+        .onlyWith(new SparkPageRankSpecification())
+        .addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
+                                  Schedule.Action.START))
+        .build();
     }
   }
 

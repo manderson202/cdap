@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -40,16 +41,19 @@ import java.net.InetAddress;
 public class WorkflowProgramRunner implements ProgramRunner {
 
   private final MapReduceProgramRunner mapReduceProgramRunner;
+  private final SparkProgramRunner sparkProgramRunner;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   public WorkflowProgramRunner(MapReduceProgramRunner mapReduceProgramRunner,
+                               SparkProgramRunner sparkProgramRunner,
                                ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService) {
     this.mapReduceProgramRunner = mapReduceProgramRunner;
+    this.sparkProgramRunner = sparkProgramRunner;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
@@ -69,7 +73,8 @@ public class WorkflowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     RunId runId = RunIds.generate();
-    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, workflowSpec, mapReduceProgramRunner);
+    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, workflowSpec, mapReduceProgramRunner,
+                                               sparkProgramRunner);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

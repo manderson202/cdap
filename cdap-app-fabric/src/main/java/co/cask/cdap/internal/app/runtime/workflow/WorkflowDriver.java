@@ -25,6 +25,7 @@ import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -55,13 +56,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Map<String, String> runtimeArgs;
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
-  private final MapReduceRunnerFactory runnerFactory;
+  private final MapReduceRunnerFactory mrRunnerFactory;
+  private final SparkRunnerFactory sparkRunnerFactory;
   private NettyHttpService httpService;
   private volatile boolean running;
   private volatile WorkflowStatus workflowStatus;
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
-                 WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
+                 WorkflowSpecification workflowSpec, MapReduceProgramRunner mrProgramRunner,
+                 SparkProgramRunner sparkProgramRunner) {
     this.program = program;
     this.runId = runId;
     this.hostname = hostname;
@@ -72,8 +75,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
-    this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner, program,
+    this.mrRunnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, mrProgramRunner, program,
                                                             runId, options.getUserArguments(), logicalStartTime);
+    this.sparkRunnerFactory = new WorkflowSparkRunnerFactory(workflowSpec, sparkProgramRunner, program, runId,
+                                                             options.getUserArguments(), logicalStartTime);
   }
 
   @Override
@@ -161,7 +166,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     try {
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
-                                                 logicalStartTime, runnerFactory, runtimeArgs));
+                                                 logicalStartTime, mrRunnerFactory, sparkRunnerFactory, runtimeArgs));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
       // this will always rethrow

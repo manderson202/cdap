@@ -24,6 +24,9 @@ import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramSpecification;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.spark.SparkConfigurer;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import co.cask.cdap.internal.batch.ForwardingMapReduceSpecification;
 import co.cask.cdap.internal.builder.BaseBuilder;
@@ -32,12 +35,14 @@ import co.cask.cdap.internal.builder.SimpleNameSetter;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import co.cask.cdap.internal.workflow.MapReduceWorkflowAction;
+import co.cask.cdap.internal.workflow.SparkWorkflowAction;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,13 +61,13 @@ import java.util.Set;
  *        .setName("PurchaseHistoryWorkflow")
  *        .setDescription("PurchaseHistoryWorkflow description")
  *        .onlyWith(new PurchaseHistoryBuilder())
- *        .addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", 
+ *        .addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
  *                     Schedule.Action.START))
  *        .build();
  *      }
  *    </code>
  *  </pre>
- * 
+ *
  * See the Purchase example application.
  */
 public interface WorkflowSpecification extends SchedulableProgramSpecification {
@@ -70,6 +75,8 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
   List<WorkflowActionSpecification> getActions();
 
   Map<String, MapReduceSpecification> getMapReduce();
+
+  Map<String, SparkSpecification> getSpark();
 
   /**
    * Builder for adding the first action to the workflow.
@@ -81,9 +88,13 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
     MoreAction<T> startWith(MapReduce mapReduce);
 
+    MoreAction<T> startWith(Spark spark);
+
     T onlyWith(WorkflowAction action);
 
     T onlyWith(MapReduce mapReduce);
+
+    T onlyWith(Spark spark);
   }
 
   /**
@@ -96,9 +107,13 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
     MoreAction<T> then(MapReduce mapReduce);
 
+    MoreAction<T> then(Spark spark);
+
     T last(WorkflowAction action);
 
     T last(MapReduce mapReduce);
+
+    T last(Spark spark);
   }
 
   /**
@@ -122,6 +137,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
     private final List<WorkflowActionSpecification> actions = Lists.newArrayList();
     private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
+    private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
     private final List<Schedule> schedules = Lists.newArrayList();
 
     /**
@@ -132,13 +148,8 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
       return SimpleNameSetter.create(
         getNameSetter(builder), SimpleDescriptionSetter.create(
-        getDescriptionSetter(builder), FirstActionImpl.create(
-        builder, (SpecificationCreator) builder)));
-    }
-
-    @Override
-    public WorkflowSpecification build() {
-      return new DefaultWorkflowSpecification(name, description, actions, mapReduces, schedules);
+          getDescriptionSetter(builder), FirstActionImpl.create(
+            builder, (SpecificationCreator) builder)));
     }
 
     /**
@@ -165,6 +176,31 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       return mapReduceSpec;
     }
 
+    /**
+     * Adds a {@link Spark} job to this workflow.
+     *
+     * @param spark The Spark job to add.
+     * @return A {@link SparkSpecification} used for the given Spark job.
+     */
+    private SparkSpecification addWorkflowSpark(Spark spark) {
+      WorkflowSparkConfigurer configurer = new WorkflowSparkConfigurer(spark);
+      spark.configure(configurer);
+      SparkSpecification sparkSpec = configurer.createSpecification();
+
+      // Rename the spark job based on the step in the workflow.
+      final String sparkName = String.format("%s_%s", name, sparkSpec.getName());
+      sparkSpec = new SparkSpecification(sparkSpec.getClassName(), sparkName, sparkSpec.getDescription(),
+                                         sparkSpec.getMainClassName(), sparkSpec.getProperties());
+
+      // Add the spark job and the spark action to this workflow.
+      sparks.put(sparkName, sparkSpec);
+      return sparkSpec;
+    }
+
+    @Override
+    public WorkflowSpecification build() {
+      return new DefaultWorkflowSpecification(name, description, actions, mapReduces, sparks, schedules);
+    }
 
     @Override
     public SpecificationCreator addSchedule(Schedule schedule) {
@@ -201,6 +237,13 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       }
 
       @Override
+      public MoreAction<T> startWith(Spark spark) {
+        Preconditions.checkArgument(spark != null, "Spark is null.");
+        SparkSpecification sparkSpec = builder.addWorkflowSpark(spark);
+        return startWith(new SparkWorkflowAction(sparkSpec.getName(), sparkSpec.getName()));
+      }
+
+      @Override
       public T onlyWith(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
         builder.actions.add(new DefaultWorkflowActionSpecification(action));
@@ -212,6 +255,13 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
         Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
         MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
         return onlyWith(new MapReduceWorkflowAction(mapReduceSpec.getName(), mapReduceSpec.getName()));
+      }
+
+      @Override
+      public T onlyWith(Spark spark) {
+        Preconditions.checkArgument(spark != null, "Spark is null.");
+        SparkSpecification sparkSpec = builder.addWorkflowSpark(spark);
+        return onlyWith(new SparkWorkflowAction(sparkSpec.getName(), sparkSpec.getName()));
       }
     }
 
@@ -244,6 +294,13 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       }
 
       @Override
+      public MoreAction<T> then(Spark spark) {
+        Preconditions.checkArgument(spark != null, "Spark is null.");
+        SparkSpecification sparkSpec = builder.addWorkflowSpark(spark);
+        return then(new SparkWorkflowAction(sparkSpec.getName(), sparkSpec.getName()));
+      }
+
+      @Override
       public T last(WorkflowAction action) {
         then(action);
         return next;
@@ -252,6 +309,12 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public T last(MapReduce mapReduce) {
         then(mapReduce);
+        return next;
+      }
+
+      @Override
+      public T last(Spark spark) {
+        then(spark);
         return next;
       }
     }
@@ -321,6 +384,46 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       MapReduceSpecification createSpecification() {
         return new DefaultMapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
                                                  properties, mapperResources, reducerResources);
+      }
+    }
+
+    // TODO (CDAP-450): Temporary. Remove when move workflow to use Configurer to configure
+    private static final class WorkflowSparkConfigurer implements SparkConfigurer {
+      private final String className;
+      private String name;
+      private String description;
+      private String mainClassName;
+      private Map<String, String> properties;
+
+      public WorkflowSparkConfigurer(Spark spark) {
+        this.className = spark.getClass().getName();
+        this.name = spark.getClass().getSimpleName();
+        this.description = "";
+        this.properties = Collections.emptyMap();
+      }
+
+      @Override
+      public void setName(String name) {
+        this.name = name;
+      }
+
+      @Override
+      public void setDescription(String description) {
+        this.description = description;
+      }
+
+      @Override
+      public void setMainClassName(String mainClassName) {
+        this.mainClassName = mainClassName;
+      }
+
+      @Override
+      public void setProperties(Map<String, String> properties) {
+        this.properties = ImmutableMap.copyOf(properties);
+      }
+
+      SparkSpecification createSpecification() {
+        return new SparkSpecification(className, name, description, mainClassName, properties);
       }
     }
   }

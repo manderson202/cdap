@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -32,15 +33,18 @@ final class BasicWorkflowContext implements WorkflowContext {
   private final WorkflowSpecification workflowSpec;
   private final WorkflowActionSpecification specification;
   private final long logicalStartTime;
-  private final MapReduceRunnerFactory runnerFactory;
+  private final MapReduceRunnerFactory mrRunnerFactory;
+  private final SparkRunnerFactory sparkRunnerFactory;
   private final Map<String, String> runtimeArgs;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, WorkflowActionSpecification specification,
-                       long logicalStartTime, MapReduceRunnerFactory runnerFactory, Map<String, String> runtimeArgs) {
+                       long logicalStartTime, MapReduceRunnerFactory mrRunnerFactory,
+                       SparkRunnerFactory sparkRunnerFactory, Map<String, String> runtimeArgs) {
     this.workflowSpec = workflowSpec;
     this.specification = specification;
     this.logicalStartTime = logicalStartTime;
-    this.runnerFactory = runnerFactory;
+    this.mrRunnerFactory = mrRunnerFactory;
+    this.sparkRunnerFactory = sparkRunnerFactory;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
   }
 
@@ -61,7 +65,12 @@ final class BasicWorkflowContext implements WorkflowContext {
 
   @Override
   public Callable<MapReduceContext> getMapReduceRunner(String name) {
-    return runnerFactory.create(name);
+    return mrRunnerFactory.create(name);
+  }
+
+  @Override
+  public Callable<SparkContext> getSparkRunner(String name) {
+    return sparkRunnerFactory.create(name);
   }
 
   @Override
